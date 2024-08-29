@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drag and Drop PDF Upload</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f7f7f7;
+        }
+        #upload-area {
+            border: 2px dashed #005710;
+            padding: 50px;
+            width: 300px;
+            text-align: center;
+            background-color: white;
+            border-radius: 10px;
+            transition: background-color 0.3s ease;
+        }
+        #upload-area.hover {
+            background-color: #e0ffe0;
+        }
+        #upload-area p {
+            font-size: 16px;
+            color: #333;
+        }
+        #upload-area input[type="file"] {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="upload-area">
+        <p>Drag & Drop PDF here</p>
+        <p>or</p>
+        <button id="upload-button">Browse Files</button>
+        <input type="file" id="file-input" accept="application/pdf">
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+        const uploadButton = document.getElementById('upload-button');
+
+        // Open file dialog on button click
+        uploadButton.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // Handle file drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('hover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('hover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('hover');
+            const files = e.dataTransfer.files;
+            handleFiles(files);
+        });
+
+        // Handle file selection
+        fileInput.addEventListener('change', (e) => {
+            const files = e.target.files;
+            handleFiles(files);
+        });
+
+        function handleFiles(files) {
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type === 'application/pdf') {
+                    uploadFile(file);
+                } else {
+                    alert('Please upload a PDF file.');
+                }
+            }
+        }
+
+        function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('pdf', file);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = 'cropped_pages.zip';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                alert('File uploaded and processed successfully!');
+            })
+            .catch(error => {
+                console.error('Error uploading file:', error);
+                alert('An error occurred while uploading the file.');
+            });
+        }
+    </script>
+</body>
+</html>
